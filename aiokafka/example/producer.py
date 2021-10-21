@@ -20,8 +20,15 @@ async def work():
 
 
 def main():
+    print("Producer started!")
     loop = asyncio.get_event_loop()
-    loop.run_until_complete(work())
+    task = loop.create_task((work()))
+    try:
+        loop.run_forever()
+    except KeyboardInterrupt:
+        task.cancel()
+    loop.stop()
+    print("Producer finished!")
 
 
 if __name__ == '__main__':
