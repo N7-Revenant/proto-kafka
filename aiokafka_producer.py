@@ -5,10 +5,18 @@ import asyncio
 async def work():
     producer = AIOKafkaProducer(bootstrap_servers='192.168.50.71:9092')
     await producer.start()
-    try:
-        await producer.send_and_wait("MyTopic", "My message".encode())
-    finally:
-        await producer.stop()
+
+    message = "My message"
+    while True:
+        try:
+            print(f"Sending '{message}'")
+            await producer.send("MyTopic", "My message".encode())
+            await asyncio.sleep(1)
+        except Exception as exc:
+            print(f"Error: {exc}")
+            break
+
+    await producer.stop()
 
 
 def main():
