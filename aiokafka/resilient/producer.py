@@ -1,6 +1,6 @@
 from aiokafka import AIOKafkaProducer, AIOKafkaClient
 from aiokafka.cluster import BrokerMetadata
-from time import time
+from aiokafka.structs import RecordMetadata
 import asyncio
 
 
@@ -8,19 +8,29 @@ KAFKA_RETRY_BACKOFF_TIMEOUT_MS = 750
 
 PRODUCER_START_RETRY_INTERVAL_S = 5
 MESSAGE_SENDING_INTERVAL_S = 1
+BOOTSTRAP_DELAY_S = 3
 
 KAFKA_TOPIC_NAME = "MyTopic"
 KAFKA_MESSAGE_TEXT = "My message"
 
 
-async def check_broker_readiness(client: AIOKafkaClient, start_ts: float = time()) -> bool:
+async def check_result(index: int, message: str, send_future: asyncio.Future):
+    try:
+        result: RecordMetadata = await send_future
+        print(f"[{index}] Message '{message}' successfully sent to topic {result.topic}!")
+
+    except Exception as exc:
+        print(f"[{index}] Message {message} won't be sent: {exc}!")
+
+
+async def check_broker_readiness(client: AIOKafkaClient, index: int) -> bool:
     ready = False
 
     brokers = client.cluster.brokers()
-    print(f"[{int(time() - start_ts)}] Brokers: {brokers}")
+    print(f"[{index}] Brokers: {brokers}")
     for broker in brokers:  # type: BrokerMetadata
         node_ready = await client.ready(node_id=broker.nodeId)
-        print(f"[{int(time() - start_ts)}] Node {broker.nodeId} ready: {node_ready}")
+        print(f"[{index}] Node {broker.nodeId} ready: {node_ready}")
         if node_ready:
             ready = True
             break
@@ -28,32 +38,29 @@ async def check_broker_readiness(client: AIOKafkaClient, start_ts: float = time(
     return ready
 
 
-async def send_messages(producer: AIOKafkaProducer):
-    i = 0
-    start_ts = time()
-    print(f"[{int(time()-start_ts)}] Working!")
+async def send_messages(producer: AIOKafkaProducer, loop: asyncio.AbstractEventLoop):
+    index = 0
+    print("Working!")
     while True:
-        fut = None
         try:
-            new_message = f"{KAFKA_MESSAGE_TEXT}_{i}"
-            ready = await check_broker_readiness(client=producer.client, start_ts=start_ts)
+            new_message = f"{KAFKA_MESSAGE_TEXT}_{index}"
+            ready = await check_broker_readiness(client=producer.client, index=index)
             if ready:
-                print(f"[{int(time() - start_ts)}] Sending '{new_message}'")
-                fut = await producer.send(KAFKA_TOPIC_NAME, new_message.encode())
+                print(f"[{index}] Sending '{new_message}'")
+                send_future = await producer.send(KAFKA_TOPIC_NAME, new_message.encode())
+                loop.create_task(check_result(index=index, message=new_message, send_future=send_future))
             else:
-                print(f"[{int(time() - start_ts)}] Not sending '{new_message}': Producer is not ready!")
+                print(f"[{index}] Not sending '{new_message}': Producer is not ready!")
+                break
 
         except asyncio.CancelledError:
             break
 
         except Exception as exc:
-            print(f"[{int(time()-start_ts)}] Error: {exc}")
+            print(f"[{index}] Error: {exc}")
 
         await asyncio.sleep(MESSAGE_SENDING_INTERVAL_S)
-        if fut is not None:
-            print(f"[{int(time() - start_ts)}] Done:{fut.done()}")
-
-        i += 1
+        index += 1
 
 
 async def attempt_work(loop: asyncio.AbstractEventLoop):
@@ -77,7 +84,10 @@ async def attempt_work(loop: asyncio.AbstractEventLoop):
             print(f"Waiting {PRODUCER_START_RETRY_INTERVAL_S} seconds before next attempt...")
             initial = False
 
-    send_messages_task = loop.create_task(send_messages(producer=producer))
+    print(f"Producer started, waiting {BOOTSTRAP_DELAY_S} seconds for bootstrap...")
+    await asyncio.sleep(BOOTSTRAP_DELAY_S)
+
+    send_messages_task = loop.create_task(send_messages(producer=producer, loop=loop))
     try:
         await send_messages_task
 
@@ -93,12 +103,11 @@ async def attempt_work(loop: asyncio.AbstractEventLoop):
 def main():
     print("Producer started!")
     loop = asyncio.get_event_loop()
-    task = loop.create_task((attempt_work(loop=loop)))
-    try:
-        loop.run_forever()
-    except KeyboardInterrupt:
-        task.cancel()
-    loop.stop()
+    while True:
+        try:
+            loop.run_until_complete(attempt_work(loop=loop))
+        except KeyboardInterrupt:
+            break
     print("Producer finished!")
 
 
