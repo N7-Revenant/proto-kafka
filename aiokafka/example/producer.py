@@ -11,7 +11,7 @@ async def work():
     while True:
         try:
             print(f"Sending '{message}'")
-            await producer.send("MyTopic", "My message".encode())
+            await producer.send("MyTopic", message.encode())
             await asyncio.sleep(1)
         except Exception as exc:
             print(f"Error: {exc}")
