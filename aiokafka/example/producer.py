@@ -6,6 +6,7 @@ async def work():
     producer = AIOKafkaProducer(bootstrap_servers='192.168.50.71:9092')
     await producer.start()
 
+    print("Working!")
     message = "My message"
     while True:
         try:
