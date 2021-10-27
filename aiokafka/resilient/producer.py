@@ -5,6 +5,7 @@ import asyncio
 
 
 KAFKA_RETRY_BACKOFF_TIMEOUT_MS = 750
+KAFKA_REQUEST_TIMEOUT_MS = 5000
 
 PRODUCER_START_RETRY_INTERVAL_S = 5
 MESSAGE_SENDING_INTERVAL_S = 1
@@ -67,7 +68,8 @@ async def attempt_work(loop: asyncio.AbstractEventLoop):
     producer = AIOKafkaProducer(bootstrap_servers=['192.168.50.71:19092',
                                                    '192.168.50.72:29092',
                                                    '192.168.50.73:39092'],
-                                retry_backoff_ms=KAFKA_RETRY_BACKOFF_TIMEOUT_MS)
+                                retry_backoff_ms=KAFKA_RETRY_BACKOFF_TIMEOUT_MS,
+                                request_timeout_ms=KAFKA_REQUEST_TIMEOUT_MS)
 
     initial = True
     started = False
@@ -85,9 +87,6 @@ async def attempt_work(loop: asyncio.AbstractEventLoop):
             print(f"Unable to start producer: {exc}")
             print(f"Waiting {PRODUCER_START_RETRY_INTERVAL_S} seconds before next attempt...")
             initial = False
-
-    print(f"Producer started, waiting {BOOTSTRAP_DELAY_S} seconds for bootstrap...")
-    await asyncio.sleep(BOOTSTRAP_DELAY_S)
 
     send_messages_task = loop.create_task(send_messages(producer=producer, loop=loop))
     try:
