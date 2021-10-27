@@ -64,7 +64,9 @@ async def send_messages(producer: AIOKafkaProducer, loop: asyncio.AbstractEventL
 
 
 async def attempt_work(loop: asyncio.AbstractEventLoop):
-    producer = AIOKafkaProducer(bootstrap_servers='192.168.50.71:9092',
+    producer = AIOKafkaProducer(bootstrap_servers=['192.168.50.71:19092',
+                                                   '192.168.50.72:29092',
+                                                   '192.168.50.73:39092'],
                                 retry_backoff_ms=KAFKA_RETRY_BACKOFF_TIMEOUT_MS)
 
     initial = True

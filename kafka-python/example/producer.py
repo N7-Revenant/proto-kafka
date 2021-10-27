@@ -11,7 +11,9 @@ async def work():
     def on_send_error(e: Exception):
         print(f"Error: {type(e)}:{e}")
 
-    producer = KafkaProducer(bootstrap_servers=['192.168.50.71:9092'])
+    producer = KafkaProducer(bootstrap_servers=['192.168.50.71:19092',
+                                                '192.168.50.71:29092',
+                                                '192.168.50.71:39092'])
     message = "My message"
     print("Working!")
 
