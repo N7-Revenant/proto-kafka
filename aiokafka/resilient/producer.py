@@ -20,7 +20,7 @@ async def check_result(index: int, message: str, send_future: asyncio.Future):
         print(f"[{index}] Message '{message}' successfully sent to topic {result.topic}!")
 
     except Exception as exc:
-        print(f"[{index}] Message {message} won't be sent: {exc}!")
+        print(f"[{index}] Message '{message}' won't be sent: {exc}!")
 
 
 async def check_broker_readiness(client: AIOKafkaClient, index: int) -> bool:
