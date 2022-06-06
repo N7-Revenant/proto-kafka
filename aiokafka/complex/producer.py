@@ -74,9 +74,9 @@ async def work():
     loop = asyncio.get_running_loop()
     producer_connector = KafkaProducerConnector(
         bootstrap_servers=[
-            '192.168.50.71:19092',
-            '192.168.50.71:29092',
-            '192.168.50.71:39092'],
+            '192.168.56.71:19092',
+            '192.168.56.71:29092',
+            '192.168.56.71:39092'],
         loop=loop)
 
     print("Working!")

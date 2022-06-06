@@ -38,7 +38,7 @@ sed -i \
   /home/vagrant/kafka1/config/server.properties
 
 sed -i \
-  's/offsets.topic.replication.factor=1/auto.create.topics.enable=false\noffsets.topic.replication.factor=3/g' \
+  's/offsets.topic.replication.factor=1/auto.create.topics.enable=true\noffsets.topic.replication.factor=3/g' \
   /home/vagrant/kafka1/config/server.properties
 
 mkdir /home/vagrant/kafka2 && cd /home/vagrant/kafka2
@@ -64,7 +64,7 @@ sed -i \
   /home/vagrant/kafka2/config/server.properties
 
 sed -i \
-  's/offsets.topic.replication.factor=1/auto.create.topics.enable=false\noffsets.topic.replication.factor=3/g' \
+  's/offsets.topic.replication.factor=1/auto.create.topics.enable=true\noffsets.topic.replication.factor=3/g' \
   /home/vagrant/kafka2/config/server.properties
 
 mkdir /home/vagrant/kafka3 && cd /home/vagrant/kafka3
@@ -90,7 +90,7 @@ sed -i \
   /home/vagrant/kafka3/config/server.properties
 
 sed -i \
-  's/offsets.topic.replication.factor=1/auto.create.topics.enable=false\noffsets.topic.replication.factor=3/g' \
+  's/offsets.topic.replication.factor=1/auto.create.topics.enable=true\noffsets.topic.replication.factor=3/g' \
   /home/vagrant/kafka3/config/server.properties
 
 cat <<EOF >/etc/systemd/system/zookeeper.service
